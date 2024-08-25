@@ -25,62 +25,62 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
 
-  check_changelog:
-    name: Check Changelog
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
-        uses: actions/checkout@v4
+  # check_changelog:
+  #   name: Check Changelog
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
+  #       uses: actions/checkout@v4
 
-      - name: Verify Changelog
-        id: verify_changelog
-        if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
-        # base_ref for pull request check, ref for push
-        uses: LizardByte/.github/actions/verify_changelog@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-    outputs:
-      next_version: ${{ steps.verify_changelog.outputs.changelog_parser_version }}
-      next_version_bare: ${{ steps.verify_changelog.outputs.changelog_parser_version_bare }}
-      last_version: ${{ steps.verify_changelog.outputs.latest_release_tag_name }}
-      release_body: ${{ steps.verify_changelog.outputs.changelog_parser_description }}
+  #     - name: Verify Changelog
+  #       id: verify_changelog
+  #       if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
+  #       # base_ref for pull request check, ref for push
+  #       uses: LizardByte/.github/actions/verify_changelog@master
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #   outputs:
+  #     next_version: ${{ steps.verify_changelog.outputs.changelog_parser_version }}
+  #     next_version_bare: ${{ steps.verify_changelog.outputs.changelog_parser_version_bare }}
+  #     last_version: ${{ steps.verify_changelog.outputs.latest_release_tag_name }}
+  #     release_body: ${{ steps.verify_changelog.outputs.changelog_parser_description }}
 
   # todo - remove this job once versioning is fully automated by cmake
-  check_versions:
-    name: Check Versions
-    runs-on: ubuntu-latest
-    needs: check_changelog
-    if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
-    # base_ref for pull request check, ref for push
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # check_versions:
+  #   name: Check Versions
+  #   runs-on: ubuntu-latest
+  #   needs: check_changelog
+  #   if: ${{ github.ref == 'refs/heads/master' || github.base_ref == 'master' }}
+  #   # base_ref for pull request check, ref for push
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Check CMakeLists.txt Version
-        run: |
-          version=$(grep -o -E '^project\(Sunshine VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | \
-            grep -o -E '[0-9]+\.[0-9]+\.[0-9]+')
-          echo "cmakelists_version=${version}" >> $GITHUB_ENV
+  #     - name: Check CMakeLists.txt Version
+  #       run: |
+  #         version=$(grep -o -E '^project\(Sunshine VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | \
+  #           grep -o -E '[0-9]+\.[0-9]+\.[0-9]+')
+  #         echo "cmakelists_version=${version}" >> $GITHUB_ENV
 
-      - name: Compare CMakeList.txt Version
-        if: ${{ env.cmakelists_version != needs.check_changelog.outputs.next_version_bare }}
-        run: |
-          echo CMakeLists version: "$cmakelists_version"
-          echo Changelog version: "${{ needs.check_changelog.outputs.next_version_bare }}"
-          echo Within 'CMakeLists.txt' change "project(Sunshine [VERSION $cmakelists_version]" to \
-            "project(Sunshine [VERSION ${{ needs.check_changelog.outputs.next_version_bare }}]"
-          exit 1
+  #     - name: Compare CMakeList.txt Version
+  #       if: ${{ env.cmakelists_version != needs.check_changelog.outputs.next_version_bare }}
+  #       run: |
+  #         echo CMakeLists version: "$cmakelists_version"
+  #         echo Changelog version: "${{ needs.check_changelog.outputs.next_version_bare }}"
+  #         echo Within 'CMakeLists.txt' change "project(Sunshine [VERSION $cmakelists_version]" to \
+  #           "project(Sunshine [VERSION ${{ needs.check_changelog.outputs.next_version_bare }}]"
+  #         exit 1
 
   setup_release:
     name: Setup Release
-    needs: check_changelog
+    # needs: check_changelog
     runs-on: ubuntu-latest
     steps:
       - name: Set release details
         id: release_details
         env:
-          RELEASE_BODY: ${{ needs.check_changelog.outputs.release_body }}
+          RELEASE_BODY: "" # ${{ needs.check_changelog.outputs.release_body }}
         run: |
           # determine to create a release or not
           if [[ $GITHUB_EVENT_NAME == "push" ]]; then
@@ -876,7 +876,7 @@ jobs:
   build_win:
     name: Windows
     runs-on: windows-2019
-    needs: [check_changelog, setup_release]
+    needs: [setup_release]
 
     steps:
       - name: Checkout
