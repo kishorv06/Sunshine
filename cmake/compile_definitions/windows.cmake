@@ -77,6 +77,9 @@ list(PREPEND PLATFORM_LIBRARIES
         PkgConfig::NLOHMANN_JSON
         ${CURL_STATIC_LIBRARIES})
 
+# Disable tray
+set(SUNSHINE_ENABLE_TRAY 0)
+
 if(SUNSHINE_ENABLE_TRAY)
     list(APPEND PLATFORM_TARGET_FILES
             "${CMAKE_SOURCE_DIR}/third-party/tray/tray_windows.c")
